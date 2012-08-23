@@ -34,8 +34,8 @@ Get tags of current git repositry:
 1> rr("include/*").
 [semver]
 2> [ semver:from_tag(T) || T <- string:tokens(os:cmd("git tag"), "\n") ].
-[#semver{x = 0,y = 4,z = 0,tag = []},
- #semver{x = 0,y = 5,z = 0,tag = []}]
+[#semver{x = 0,y = 4,z = 0,pre = <<>>,build = undefined},
+ #semver{x = 0,y = 5,z = 0,pre = <<>>,build = undefined}]
 ```
 
 Author
