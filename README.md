@@ -37,3 +37,13 @@ Get tags of current git repositry:
 [#semver{x = 0,y = 4,z = 0,tag = []},
  #semver{x = 0,y = 5,z = 0,tag = []}]
 ```
+
+Author
+======
+Gleb Peregud <gleber.p@gmail.com> for LivePress Inc.
+Copyright 2011-2012 LivePress Inc.
+
+License
+=======
+
+MIT license
