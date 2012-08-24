@@ -19,16 +19,8 @@ clean:  $(REBAR)
 tests:  $(REBAR)
 	$(REBAR) eunit
 
-ALL=    priv/coffee/app.js \
-	priv/models/build.js \
-	priv/controllers/builds_controller.js
-
-%.js: %.coffee
-	@coffee -c $<
-
-priv/js/kha.js: $(ALL)
-	cat $^ > $@
-
+sh: normal
+	erl -pa ebin/ -pa deps/*/ebin -eval "c:m(semver)."
 
 # Detect or download rebar
 
