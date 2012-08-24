@@ -4,6 +4,8 @@
 
          parse/1,
 
+         get_x/1, get_y/1, get_z/1, get_tag/1, get_pre/1, get_build/1,
+
          inc/2,
          inc_x/1,
          inc_y/1,
@@ -75,6 +77,24 @@ from_str(Str) ->
 from_tag(Str) ->
     Re = "^v(?<major>\\d+)\.(?<minor>\\d+)\.(?<patchlevel>\\d+)(?<pre>-[0-9A-Za-z-\.]+)?(?<build>\\+[0-9A-Za-z-\.]+)?\$",
     from_re(Str, Re).
+
+-spec get_x(semver()) -> integer().
+get_x(#semver{x = X}) -> X.
+
+-spec get_y(semver()) -> integer().
+get_y(#semver{y = Y}) -> Y.
+
+-spec get_z(semver()) -> integer().
+get_z(#semver{z = Z}) -> Z.
+
+-spec get_tag(semver()) -> string().
+get_tag(#semver{} = V) -> to_str1("", V).
+
+-spec get_pre(semver()) -> string().
+get_pre(#semver{pre = P}) -> stringify_tag(P).
+
+-spec get_build(semver()) -> string().
+get_build(#semver{build = B}) -> stringify_tag(B).
 
 -spec inc(semver(), level()) -> semver().
 inc(V, x) ->
@@ -154,21 +174,23 @@ parse0(S) ->
 to_str1(Str, #semver{pre = ?UND_PRE} = SV) ->
     to_str2(Str, SV);
 to_str1(Str, #semver{pre = Pre} = SV) ->
-    to_str2(Str++"-"++stringy_tag(Pre), SV).
+    to_str2(Str++"-"++stringify_tag(Pre), SV).
 to_str2(Str, #semver{build = ?UND_BUILD}) ->
     Str;
 to_str2(Str, #semver{build = Build}) ->
-    Str++"+"++stringy_tag(Build).
+    Str++"+"++stringify_tag(Build).
 
-stringy_tag(L) ->
-    string:join(stringy_tag0(L), ".").
+stringify_tag(?UND_PRE) -> undefined;
+stringify_tag(?UND_BUILD) -> undefined;
+stringify_tag(L) ->
+    string:join(stringify_tag0(L), ".").
 
-stringy_tag0([]) ->
+stringify_tag0([]) ->
     [];
-stringy_tag0([A|T]) when is_integer(A) ->
-    [integer_to_list(A) | stringy_tag0(T)];
-stringy_tag0([A|T]) when is_list(A) ->
-    [A | stringy_tag0(T)].
+stringify_tag0([A|T]) when is_integer(A) ->
+    [integer_to_list(A) | stringify_tag0(T)];
+stringify_tag0([A|T]) when is_list(A) ->
+    [A | stringify_tag0(T)].
 
 parse_pre(P) when is_list(P) ->
     und(parse_tag(string:strip(P, left, $-))).

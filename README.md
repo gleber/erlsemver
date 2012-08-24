@@ -40,6 +40,26 @@ To string:
 "1.0.0-rc.1+build.1"
 ```
 
+Introspection:
+```erlang
+1> X = semver:new(1,2,3,"alpha","build.1").
+#semver{x = 1,y = 2,z = 3,
+        pre = ["alpha"],
+        build = ["build",1]}
+2> semver:get_x(X).
+1
+3> semver:get_y(X).
+2
+4> semver:get_z(X).
+3
+5> semver:get_pre(X).
+"alpha"
+6> semver:get_build(X).
+"build.1"
+7> semver:get_tag(X).  
+"-alpha+build.1"
+```
+
 Comparing:
 ```erlang
 1> semver:from_str("1.0.0-rc.1+build.1") < semver:from_str("1.0.0").
