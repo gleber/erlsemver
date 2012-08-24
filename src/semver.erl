@@ -2,16 +2,20 @@
 
 -export([new/1, new/2, new/3, new/4, new/5,
 
+         parse/1,
+
          inc/2,
          inc_x/1,
          inc_y/1,
          inc_z/1,
+
          to_str/1,
          to_tag/1,
+
          from_str/1,
          from_tag/1,
-
          from_git_describe/1,
+
          git_describe_to_dev_dist/1,
 
          compare/2
@@ -33,13 +37,13 @@ new(X, Y) ->
 new(X, Y, Z) ->
     #semver{x = X, y = Y, z = Z}.
 new(X, Y, Z, ["-" | Pre]) ->
-    #semver{x = X, y = Y, z = Z, pre = Pre};
+    #semver{x = X, y = Y, z = Z, pre = parse_pre(Pre)};
 new(X, Y, Z, ["+" | Build]) ->
-    #semver{x = X, y = Y, z = Z, build = Build};
+    #semver{x = X, y = Y, z = Z, build = parse_build(Build)};
 new(X, Y, Z, Pre) ->
-    #semver{x = X, y = Y, z = Z, pre = Pre}.
+    #semver{x = X, y = Y, z = Z, pre = parse_pre(Pre)}.
 new(X, Y, Z, Pre, Build) ->
-    #semver{x = X, y = Y, z = Z, pre = Pre, build = Build}.
+    #semver{x = X, y = Y, z = Z, pre = parse_pre(Pre), build = parse_build(Build)}.
 
 inc(V, x) ->
     inc_x(V);
@@ -85,6 +89,18 @@ to_str2(Str, #semver{build = Build}) ->
 to_tag(#semver{} = SV) ->
     [$v | to_str(SV)].
 
+parse(S) ->
+    try
+        {ok, parse0(S)}
+    catch
+        error:{improper_version, _Str} ->
+            {error, badarg}
+    end.
+
+parse0([$v | S]) ->
+    from_tag([$v | S]);
+parse0(S) ->
+    from_str(S).
 
 from_tag(Str) ->
     Re = "^v(?<major>\\d+)\.(?<minor>\\d+)\.(?<patchlevel>\\d+)(?<pre>-[0-9A-Za-z-\.]+)?(?<build>\\+[0-9A-Za-z-\.]+)?\$",
@@ -113,6 +129,11 @@ stringy_tag0([A|T]) when is_integer(A) ->
     [integer_to_list(A) | stringy_tag0(T)];
 stringy_tag0([A|T]) when is_list(A) ->
     [A | stringy_tag0(T)].
+
+parse_pre(P) ->
+    und(parse_tag(string:strip(P, left, $-))).
+parse_build(B) ->
+    und2(parse_tag(string:strip(B, left, $+))).
 
 parse_tag(T) ->
     intify(string:tokens(T, ".")).
@@ -143,8 +164,8 @@ from_re(Str, Re) ->
             #semver{x = list_to_integer(X0),
                     y = list_to_integer(Y0),
                     z = list_to_integer(Z0),
-                    pre = und(parse_tag(string:strip(Pre, left, $-))),
-                    build = und2(parse_tag(string:strip(Build, left, $+)))};
+                    pre = parse_pre(Pre),
+                    build = parse_build(Build)};
         nomatch ->
             erlang:error({improper_version, Str})
     end.
@@ -183,9 +204,9 @@ analyze_git_describe_tag(Str) ->
     Re = "^(?<tag>[a-zA-z][a-zA-Z0-9-]+)?-(?<distance>[0-9]+)-(?<commit>[a-z0-9-]+)\$",
     case re:run(Str, Re, [{capture, ['tag', 'distance', 'commit'], list}]) of
         {match, ["", Dist, Commit]}  ->
-            "git"++Dist++"-"++Commit;
+            ["git", Dist, Commit];
         _ ->
-            Str
+            [Str]
     end.
 
 from_git_describe(Str) ->
@@ -198,7 +219,7 @@ from_git_describe(Str) ->
                     #semver{x = list_to_integer(X0),
                             y = list_to_integer(Y0),
                             z = list_to_integer(Z0),
-                            build = Tag};
+                            build = intify(Tag)};
                 [X0, Y0, Z0] ->
                     #semver{x = list_to_integer(X0),
                             y = list_to_integer(Y0),
